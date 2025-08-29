@@ -2,7 +2,7 @@
   "name": "نظام مخالفات الطلاب",
   "short_name": "المخالفات",
   "description": "تطبيق لإدارة وتسجيل مخالفات الطلاب بسهولة واحترافية.",
-  "start_url": "./تطبيق مخالفات الطلاب.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#5D5CDE",
   "theme_color": "#5D5CDE",
