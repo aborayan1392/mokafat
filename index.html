@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- PWA Meta Tags -->
+    <title>نظام مخالفات الطلاب</title>
+    <meta name="theme-color" content="#5D5CDE"/>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="المخالفات">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #5D5CDE;
+            --primary-gradient: linear-gradient(135deg, #5D5CDE 0%, #7B7AE8 100%);
+            --primary-hover: #4845C7;
+            --secondary-color: #6B7280;
+            --success-color: #10B981;
+            --danger-color: #EF4444;
+            --warning-color: #F59E0B;
+            --info-color: #3B82F6;
+            
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --bg-dark: #181818;
+            --bg-card: #FFFFFF;
+            --bg-card-dark: #1F2937;
+            
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --text-light: #FFFFFF;
+            --text-dark: #F9FAFB;
+            
+            --border-color: #E5E7EB;
+            --border-dark: #374151;
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --border-radius-lg: 16px;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            --font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+            --header-height: 70px;
+            --bottom-nav-height: 70px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            font-size: 16px;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        body.dark {
+            --bg-primary: #111827;
+            --bg-secondary: #1F2937;
+            --bg-card: #1F2937;
+            --text-primary: #F9FAFB;
+            --text-secondary: #9CA3AF;
+            --border-color: #374151;
+        }
+
+        .app-container { display: flex; flex-direction: column; min-height: 100vh; position: relative; }
+        .app-header { background: var(--primary-gradient); color: var(--text-light); padding: 1rem; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; box-shadow: var(--shadow-lg); height: var(--header-height); display: flex; align-items: center; justify-content: space-between; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .menu-toggle { background: none; border: none; color: var(--text-light); font-size: 1.25rem; cursor: pointer; padding: 0.5rem; border-radius: var(--border-radius-sm); transition: all 0.3s ease; }
+        .menu-toggle:hover { background: rgba(255, 255, 255, 0.1); }
+        .header-title { font-size: 1.125rem; font-weight: 600; }
+        .header-right { display: flex; align-items: center; gap: 0.75rem; }
+        .header-actions { display: flex; gap: 0.5rem; }
+        .header-btn { background: rgba(255, 255, 255, 0.15); border: none; color: var(--text-light); padding: 0.5rem; border-radius: var(--border-radius-sm); cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; backdrop-filter: blur(10px); }
+        .header-btn:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-1px); }
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 1500; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .sidebar-overlay.show { opacity: 1; visibility: visible; }
+        .sidebar { position: fixed; top: 0; right: -300px; width: 280px; height: 100vh; background: var(--bg-card); z-index: 1600; transition: all 0.3s ease; box-shadow: var(--shadow-xl); display: flex; flex-direction: column; }
+        .sidebar.show { right: 0; }
+        .sidebar-header { background: var(--primary-gradient); color: var(--text-light); padding: 1.5rem 1rem; display: flex; align-items: center; justify-content: space-between; }
+        .sidebar-title { font-size: 1.125rem; font-weight: 600; }
+        .sidebar-close { background: none; border: none; color: var(--text-light); font-size: 1.25rem; cursor: pointer; padding: 0.25rem; }
+        .sidebar-content { flex: 1; padding: 1rem 0; overflow-y: auto; }
+        .sidebar-section { margin-bottom: 1.5rem; }
+        .sidebar-section-title { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 1rem; margin-bottom: 0.75rem; }
+        .sidebar-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; color: var(--text-primary); text-decoration: none; transition: all 0.3s ease; border: none; background: none; width: 100%; cursor: pointer; font-family: inherit; font-size: 0.9rem; }
+        .sidebar-menu-item:hover { background: var(--bg-primary); color: var(--primary-color); }
+        .sidebar-menu-item.active { background: var(--primary-color); color: var(--text-light); }
+        .sidebar-menu-item i { width: 20px; text-align: center; font-size: 1rem; }
+        .main-content { flex: 1; margin-top: var(--header-height); margin-bottom: var(--bottom-nav-height); padding: 1rem; min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height)); }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border-color); padding: 0.5rem 0; z-index: 999; box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); height: var(--bottom-nav-height); }
+        .bottom-nav-container { display: flex; justify-content: space-around; align-items: center; max-width: 100%; margin: 0 auto; height: 100%; }
+        .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; color: var(--text-secondary); text-decoration: none; transition: all 0.3s ease; border-radius: var(--border-radius-sm); min-width: 60px; font-size: 0.75rem; font-weight: 500; position: relative; cursor: pointer; background: none; border: none; font-family: inherit; }
+        .bottom-nav-item:hover { color: var(--primary-color); background: rgba(93, 92, 222, 0.1); }
+        .bottom-nav-item.active { color: var(--primary-color); }
+        .bottom-nav-item.active::before { content: ''; position: absolute; top: -0.5rem; left: 50%; transform: translateX(-50%); width: 30px; height: 3px; background: var(--primary-color); border-radius: 0 0 3px 3px; }
+        .bottom-nav-icon { font-size: 1.25rem; margin-bottom: 0.125rem; }
+        .bottom-nav-badge { position: absolute; top: 0.25rem; right: 0.25rem; background: var(--danger-color); color: var(--text-light); font-size: 0.6rem; padding: 0.125rem 0.375rem; border-radius: 10px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        .view { display: none; animation: fadeIn 0.3s ease-out; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .page-header { background: var(--bg-card); padding: 1.25rem; margin: -1rem -1rem 1.5rem; border-bottom: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
+        .page-title { font-size: 1.375rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.75rem; }
+        .page-subtitle { color: var(--text-secondary); font-size: 0.9rem; }
+        .page-actions { margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .card { background: var(--bg-card); border-radius: var(--border-radius-lg); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: all 0.3s ease; }
+        .card:hover { box-shadow: var(--shadow-lg); }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+        .card-title { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.75rem; }
+        .card-title i { color: var(--primary-color); font-size: 1.25rem; }
+        .quick-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { background: var(--bg-card); padding: 1.25rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .stat-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+        .stat-icon.primary { color: var(--primary-color); } .stat-icon.success { color: var(--success-color); } .stat-icon.warning { color: var(--warning-color); } .stat-icon.danger { color: var(--danger-color); }
+        .stat-number { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .stat-label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary); font-size: 0.9rem; }
+        .form-input { width: 100%; padding: 0.875rem 1rem; border: 2px solid var(--border-color); border-radius: var(--border-radius); font-size: 1rem; font-family: inherit; background: var(--bg-secondary); color: var(--text-primary); transition: all 0.3s ease; }
+        .form-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(93, 92, 222, 0.1); transform: translateY(-1px); }
+        .form-input::placeholder { color: var(--text-secondary); }
+        .form-textarea { resize: vertical; min-height: 100px; }
+        .form-select { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e"); background-position: left 0.75rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-left: 2.5rem; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.875rem 1.25rem; border: none; border-radius: var(--border-radius); font-size: 0.9rem; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.3s ease; text-decoration: none; position: relative; overflow: hidden; }
+        .btn:active { transform: translateY(1px); }
+        .btn-primary { background: var(--primary-gradient); color: var(--text-light); box-shadow: var(--shadow); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .btn-secondary { background: var(--secondary-color); color: var(--text-light); } .btn-success { background: var(--success-color); color: var(--text-light); } .btn-danger { background: var(--danger-color); color: var(--text-light); } .btn-warning { background: var(--warning-color); color: var(--text-light); } .btn-info { background: var(--info-color); color: var(--text-light); }
+        .btn-sm { padding: 0.5rem 0.875rem; font-size: 0.8rem; }
+        .btn-lg { padding: 1rem 1.5rem; font-size: 1rem; }
+        .btn-group { display: flex; gap: 0.75rem; margin-top: 1rem; }
+        .btn-group .btn { flex: 1; }
+        .list-container { max-height: 400px; overflow-y: auto; }
+        .list-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); padding: 1rem; margin-bottom: 0.75rem; transition: all 0.3s ease; cursor: pointer; opacity: 0; transform: translateY(20px); animation: slideIn 0.4s ease-out forwards; }
+        .list-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--primary-color); }
+        @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+        .violation-types-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+        .violation-type-tag { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--bg-primary); color: var(--text-primary); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); font-size: 0.8rem; border: 1px solid var(--border-color); transition: all 0.3s ease; }
+        .violation-type-tag:hover { background: var(--primary-color); color: var(--text-light); }
+        .violation-type-tag .remove-btn { background: none; border: none; color: var(--danger-color); cursor: pointer; padding: 0; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease; }
+        .violation-type-tag .remove-btn:hover { background: var(--danger-color); color: white; }
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .toast { position: fixed; bottom: calc(var(--bottom-nav-height) + 1rem); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text-primary); color: var(--text-light); padding: 1rem 1.5rem; border-radius: var(--border-radius-lg); box-shadow: var(--shadow-xl); z-index: 2000; opacity: 0; transition: all 0.3s ease; font-size: 0.9rem; max-width: calc(100% - 2rem); }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; visibility: hidden; transition: all 0.3s ease; padding: 1rem; }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal { background: var(--bg-card); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; transform: scale(0.9); transition: transform 0.3s ease; }
+        .modal-overlay.show .modal { transform: scale(1); }
+        .modal-header { margin-bottom: 1rem; }
+        .modal-title { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); }
+        .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+        .modal-actions .btn { flex: 1; }
+        .search-result-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); padding: 1rem; margin-bottom: 0.75rem; transition: all 0.3s ease; cursor: pointer; }
+        .search-result-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--primary-color); }
+        .search-highlight { background: rgba(93, 92, 222, 0.2); padding: 0.1rem 0.2rem; border-radius: 3px; font-weight: 600; }
+        @media (max-width: 480px) { .main-content { padding: 0.75rem; } .card { padding: 1rem; margin-bottom: 1rem; } .quick-stats { grid-template-columns: repeat(2, 1fr); } .page-header { padding: 1rem; margin: -0.75rem -0.75rem 1rem; } }
+        .list-item:nth-child(1) { animation-delay: 0.1s; } .list-item:nth-child(2) { animation-delay: 0.2s; } .list-item:nth-child(3) { animation-delay: 0.3s; } .list-item:nth-child(4) { animation-delay: 0.4s; } .list-item:nth-child(5) { animation-delay: 0.5s; }
+
+        #print-area { display: none; }
+        @media print {
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: #fff; color: #000; font-family: 'Cairo', sans-serif; }
+            .app-container > *:not(#print-area) { display: none !important; }
+            #print-area { display: block; direction: rtl; }
+            @page { size: A4; margin: 15mm; }
+            .print-page { page-break-after: always; position: relative; min-height: calc(297mm - 30mm); }
+            .print-page:last-child { page-break-after: auto; }
+            .print-header, .print-footer { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; font-size: 10pt; color: #777; }
+            .print-header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+            .print-header h1 { font-size: 18pt; color: #000; margin: 0; }
+            .print-header .logo { font-size: 24pt; color: #5D5CDE; }
+            .print-header .date-info { text-align: left; font-size: 9pt; }
+            .print-footer { position: absolute; bottom: 0; width: 100%; border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-size: 9pt; }
+            .student-info { background-color: #f2f2f2 !important; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+            .student-info h2 { font-size: 14pt; margin: 0 0 5px 0; color: #333; }
+            .student-info p { font-size: 10pt; margin: 0; color: #555; }
+            .print-table { width: 100%; border-collapse: collapse; font-size: 10pt; page-break-inside: auto; }
+            .print-table thead { display: table-header-group; }
+            .print-table th, .print-table td { border: 1px solid #ccc; padding: 8px; text-align: right; }
+            .print-table th { background-color: #5D5CDE !important; color: #fff !important; font-weight: bold; }
+            .print-table tr { page-break-inside: avoid; }
+            .print-table tr:nth-child(even) td { background-color: #f9f9f9 !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle" aria-label="فتح القائمة"><i class="fas fa-bars"></i></button>
+                <div class="header-title" id="headerTitle">الرئيسية</div>
+            </div>
+            <div class="header-right">
+                <div class="header-actions">
+                    <button class="header-btn" id="searchBtn" title="البحث" aria-label="البحث"><i class="fas fa-search"></i></button>
+                    <button class="header-btn" id="settingsBtn" title="الإعدادات" aria-label="الإعدادات"><i class="fas fa-cog"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sidebar Menu -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title"><i class="fas fa-clipboard-list"></i> نظام المخالفات</div>
+                <button class="sidebar-close" id="sidebarClose" aria-label="إغلاق القائمة"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">التنقل الرئيسي</div>
+                    <button class="sidebar-menu-item active" data-view="home"> <i class="fas fa-home"></i> <span>الرئيسية</span> </button>
+                    <button class="sidebar-menu-item" data-view="students"> <i class="fas fa-users"></i> <span>ملفات الطلاب</span> </button>
+                    <button class="sidebar-menu-item" data-view="violations"> <i class="fas fa-list"></i> <span>جميع المخالفات</span> </button>
+                    <button class="sidebar-menu-item" data-view="reports"> <i class="fas fa-chart-bar"></i> <span>التقارير والإحصائيات</span> </button>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">الإدارة</div>
+                    <button class="sidebar-menu-item" id="manageViolationTypes"> <i class="fas fa-cogs"></i> <span>إدارة أنواع المخالفات</span> </button>
+                    <button class="sidebar-menu-item" id="exportData"> <i class="fas fa-download"></i> <span>تصدير CSV</span> </button>
+                    <button class="sidebar-menu-item" id="importData"> <i class="fas fa-upload"></i> <span>استيراد البيانات</span> </button>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">الإعدادات</div>
+                    <button class="sidebar-menu-item" id="toggleDarkMode"> <i class="fas fa-moon"></i> <span id="darkModeLabel">الوضع المظلم</span> </button>
+                    <button class="sidebar-menu-item" id="backupData"> <i class="fas fa-cloud-download-alt"></i> <span>نسخ احتياطي</span> </button>
+                    <button class="sidebar-menu-item" id="clearAllData"> <i class="fas fa-trash-alt"></i> <span>مسح جميع البيانات</span> </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="homeView" class="view active">
+                <div class="page-header"><h1 class="page-title"><i class="fas fa-home"></i> لوحة التحكم الرئيسية</h1><p class="page-subtitle">إدارة وتتبع مخالفات الطلاب بسهولة</p></div>
+                <div class="quick-stats">
+                    <div class="stat-card"><div class="stat-icon primary"><i class="fas fa-users"></i></div><div class="stat-number" id="totalStudents">0</div><div class="stat-label">إجمالي الطلاب</div></div>
+                    <div class="stat-card"><div class="stat-icon warning"><i class="fas fa-exclamation-triangle"></i></div><div class="stat-number" id="totalViolations">0</div><div class="stat-label">إجمالي المخالفات</div></div>
+                    <div class="stat-card"><div class="stat-icon success"><i class="fas fa-calendar-day"></i></div><div class="stat-number" id="todayViolations">0</div><div class="stat-label">مخالفات اليوم</div></div>
+                    <div class="stat-card"><div class="stat-icon danger"><i class="fas fa-user-times"></i></div><div class="stat-number" id="highViolationStudents">0</div><div class="stat-label">طلاب متكررين</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-plus-circle"></i> إضافة مخالفة جديدة</div></div>
+                    <form id="violationForm">
+                        <input type="hidden" id="editingViolationId" value=""><div class="form-group"><label class="form-label" for="studentName">اسم الطالب *</label><input type="text" id="studentName" class="form-input" required placeholder="مثال: أحمد محمد علي"></div>
+                        <div class="form-group"><label class="form-label" for="studentId">رقم هوية/أكاديمي</label><input type="text" id="studentId" class="form-input" placeholder="مثال: 1234567890"></div>
+                        <div class="form-group"><label class="form-label" for="violationType">نوع المخالفة *</label><select id="violationType" class="form-input form-select" required><option value="">-- اختر نوع المخالفة --</option></select></div>
+                        <div class="form-group"><label class="form-label" for="violationDate">تاريخ المخالفة *</label><input type="date" id="violationDate" class="form-input" required></div>
+                        <div class="form-group"><label class="form-label" for="notes">ملاحظات إضافية</label><textarea id="notes" class="form-input form-textarea" placeholder="أدخل أي تفاصيل إضافية هنا..."></textarea></div>
+                        <div class="form-group"><label class="form-label" for="guardianPhone">رقم واتساب ولي الأمر</label><input type="text" id="guardianPhone" class="form-input" placeholder="مثال: 9665XXXXXXXX"></div>
+                        <div class="btn-group"><button type="submit" id="submitButton" class="btn btn-primary btn-lg"><i class="fas fa-plus"></i> إضافة المخالفة</button><button type="button" id="cancelEditButton" class="btn btn-secondary" style="display: none;"><i class="fas fa-times"></i> إلغاء التعديل</button></div>
+                    </form>
+                </div>
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-clock"></i> آخر المخالفات</div><button class="btn btn-info btn-sm" onclick="showView('violations')"><i class="fas fa-eye"></i> عرض الكل</button></div>
+                    <div class="list-container" id="recentViolationsList"></div>
+                </div>
+            </div>
+            <div id="studentsView" class="view">
+                <div class="page-header"><h1 class="page-title"><i class="fas fa-users"></i> ملفات الطلاب</h1><p class="page-subtitle">إدارة ومتابعة ملفات الطلاب الشخصية</p><div class="page-actions"><button class="btn btn-primary btn-sm" onclick="openSearchModal()"><i class="fas fa-search"></i> البحث المتقدم</button></div></div>
+                <div class="list-container" id="studentsList"></div>
+            </div>
+            <div id="studentProfileView" class="view">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="fas fa-user-graduate"></i> <span id="currentStudentName">ملف الطالب</span></h1>
+                    <div class="page-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="showView('students')"><i class="fas fa-arrow-right"></i> العودة للطلاب</button>
+                        <button class="btn btn-warning btn-sm" onclick="openEditStudentModal()"><i class="fas fa-user-edit"></i> تعديل البيانات</button>
+                        <button class="btn btn-danger btn-sm" onclick="printCurrentStudentReport()"><i class="fas fa-print"></i> طباعة تقرير</button>
+                        <button class="btn btn-success btn-sm" id="sendAllViolationsBtn"><i class="fab fa-whatsapp"></i> إرسال للواتساب</button>
+                    </div>
+                </div>
+                <div class="quick-stats">
+                    <div class="stat-card"><div class="stat-icon primary"><i class="fas fa-exclamation-triangle"></i></div><div class="stat-number" id="profileTotalViolations">0</div><div class="stat-label">إجمالي المخالفات</div></div>
+                    <div class="stat-card"><div class="stat-icon warning"><i class="fas fa-calendar-month"></i></div><div class="stat-number" id="profileMonthViolations">0</div><div class="stat-label">هذا الشهر</div></div>
+                    <div class="stat-card"><div class="stat-icon success"><i class="fas fa-clock"></i></div><div class="stat-number" id="profileLastViolation">-</div><div class="stat-label">آخر مخالفة</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-plus-circle"></i> إضافة مخالفة سريعة</div></div>
+                    <form id="quickViolationForm">
+                        <input type="hidden" id="quickStudentName" value=""><input type="hidden" id="quickStudentId" value=""><input type="hidden" id="quickGuardianPhone" value="">
+                        <div class="form-group"><select id="quickViolationType" class="form-input form-select" required><option value="">-- اختر نوع المخالفة --</option></select></div>
+                        <div class="form-group"><input type="date" id="quickViolationDate" class="form-input" required></div>
+                        <div class="form-group"><textarea id="quickNotes" class="form-input form-textarea" placeholder="ملاحظات (اختياري)"></textarea></div>
+                        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;"><i class="fas fa-plus"></i> إضافة مخالفة</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-history"></i> سجل المخالفات</div></div>
+                    <div class="list-container" id="profileViolationsList"></div>
+                </div>
+            </div>
+            <div id="violationsView" class="view">
+                <div class="page-header"><h1 class="page-title"><i class="fas fa-list"></i> جميع المخالفات</h1><p class="page-subtitle">عرض شامل لجميع المخالفات المسجلة</p><div class="page-actions"><button class="btn btn-primary btn-sm" onclick="openSearchModal()"><i class="fas fa-search"></i> البحث المتقدم</button></div></div>
+                <div class="list-container" id="allViolationsList"></div>
+            </div>
+            <div id="reportsView" class="view">
+                <div class="page-header"><h1 class="page-title"><i class="fas fa-chart-bar"></i> التقارير والإحصائيات</h1><p class="page-subtitle">تحليل وإحصائيات شاملة للمخالفات</p><div class="page-actions"><button class="btn btn-danger btn-sm" onclick="printAllStudentsReport()"><i class="fas fa-print"></i> طباعة تقرير شامل</button></div></div>
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fas fa-chart-pie"></i> إحصائيات عامة</div></div>
+                    <div id="reportsContent"></div>
+                </div>
+            </div>
+        </main>
+        <nav class="bottom-nav">
+            <div class="bottom-nav-container">
+                <button class="bottom-nav-item active" data-view="home"><div class="bottom-nav-icon"><i class="fas fa-home"></i></div><span>الرئيسية</span></button>
+                <button class="bottom-nav-item" data-view="students"><div class="bottom-nav-icon"><i class="fas fa-users"></i><span class="bottom-nav-badge" id="studentsCount">0</span></div><span>الطلاب</span></button>
+                <button class="bottom-nav-item" data-view="violations"><div class="bottom-nav-icon"><i class="fas fa-exclamation-triangle"></i><span class="bottom-nav-badge" id="violationsCount">0</span></div><span>المخالفات</span></button>
+                <button class="bottom-nav-item" data-view="reports"><div class="bottom-nav-icon"><i class="fas fa-chart-bar"></i></div><span>التقارير</span></button>
+            </div>
+        </nav>
+    </div>
+    
+    <div id="print-area"></div>
+
+    <div class="modal-overlay" id="confirmModal"> <div class="modal"> <div class="modal-header"> <h3 class="modal-title" id="confirmModalTitle"></h3> </div> <p id="confirmModalMessage"></p> <div class="modal-actions"> <button class="btn btn-danger" id="confirmModalConfirm"><i class="fas fa-check"></i> تأكيد</button> <button class="btn btn-secondary" id="confirmModalCancel"><i class="fas fa-times"></i> إلغاء</button> </div> </div> </div>
+    <div class="modal-overlay" id="violationTypesModal"> <div class="modal"> <div class="modal-header"> <h3 class="modal-title">إدارة أنواع المخالفات</h3> </div> <div class="form-group"> <label class="form-label">الأنواع الحالية:</label> <div class="violation-types-grid" id="violationTypesGrid"></div> </div> <div class="form-group"> <label class="form-label" for="newViolationTypeInput">إضافة نوع جديد:</label> <input type="text" id="newViolationTypeInput" class="form-input" placeholder="اكتب نوع المخالفة الجديد"> </div> <div class="modal-actions"> <button class="btn btn-primary" id="addNewViolationType"><i class="fas fa-plus"></i> إضافة</button> <button class="btn btn-secondary" onclick="closeModal('violationTypesModal')"><i class="fas fa-times"></i> إغلاق</button> </div> </div> </div>
+    <div class="modal-overlay" id="editStudentModal"> <div class="modal"> <div class="modal-header"> <h3 class="modal-title">تعديل بيانات الطالب</h3> </div> <form id="editStudentForm"> <input type="hidden" id="editStudentOriginalKey"> <div class="form-group"><label class="form-label" for="editStudentName">اسم الطالب</label><input type="text" id="editStudentName" class="form-input" required></div> <div class="form-group"><label class="form-label" for="editStudentId">رقم هوية/أكاديمي</label><input type="text" id="editStudentId" class="form-input"></div> <div class="form-group"><label class="form-label" for="editStudentGuardianPhone">رقم واتساب ولي الأمر</label><input type="text" id="editStudentGuardianPhone" class="form-input"></div> <div class="modal-actions"> <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ</button> <button type="button" class="btn btn-secondary" onclick="closeModal('editStudentModal')"><i class="fas fa-times"></i> إلغاء</button> </div> </form> </div> </div>
+    <div class="modal-overlay" id="searchModal"> <div class="modal" style="max-width: 500px;"> <div class="modal-header"> <h3 class="modal-title"><i class="fas fa-search"></i> البحث والتصفية</h3> </div> <form id="searchForm"> <div class="form-group"><label class="form-label" for="searchStudentName"><i class="fas fa-user"></i> البحث بالاسم</label><input type="text" id="searchStudentName" class="form-input"></div> <div class="form-group"><label class="form-label" for="searchStudentId"><i class="fas fa-id-card"></i> البحث بالرقم الأكاديمي</label><input type="text" id="searchStudentId" class="form-input"></div> <div class="form-group"><label class="form-label" for="searchViolationType"><i class="fas fa-exclamation-triangle"></i> نوع المخالفة</label><select id="searchViolationType" class="form-input form-select"><option value="">-- جميع الأنواع --</option></select></div> <div class="form-group"><label class="form-label"><i class="fas fa-calendar"></i> فترة المخالفات</label><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;"><input type="date" id="searchDateFrom" class="form-input"><input type="date" id="searchDateTo" class="form-input"></div></div> <div class="form-group"><label class="form-label" for="searchViolationCount"><i class="fas fa-chart-bar"></i> عدد المخالفات</label><select id="searchViolationCount" class="form-input form-select"><option value="">-- أي عدد --</option><option value="1">1</option><option value="2-3">2-3</option><option value="4-5">4-5</option><option value="6+">6+</option></select></div> <div class="modal-actions"> <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> بحث</button> <button type="button" class="btn btn-secondary" onclick="resetSearchForm()"><i class="fas fa-refresh"></i> إعادة تعيين</button> <button type="button" class="btn btn-secondary" onclick="closeModal('searchModal')"><i class="fas fa-times"></i> إلغاء</button> </div> </form> </div> </div>
+    <div class="modal-overlay" id="searchResultsModal"> <div class="modal" style="max-width: 600px; max-height: 80vh;"> <div class="modal-header"><h3 class="modal-title"><i class="fas fa-search"></i> نتائج البحث <span id="searchResultsCount"></span></h3></div> <div class="list-container" id="searchResultsList" style="max-height: 400px;"></div> <div class="modal-actions"> <button class="btn btn-info" onclick="showModal('searchModal')"><i class="fas fa-search"></i> بحث جديد</button> <button class="btn btn-secondary" onclick="closeModal('searchResultsModal')"><i class="fas fa-times"></i> إغلاق</button> </div> </div> </div>
+    
+    <script>
+        // --- START OF FULL SCRIPT ---
+        let violations = JSON.parse(localStorage.getItem('studentViolationsMobileV4')) || [];
+        let violationTypes = JSON.parse(localStorage.getItem('violationTypesV4')) || ['تأخير صباحي', 'غياب بدون عذر', 'سلوك غير لائق', 'عدم إحضار الأدوات المدرسية', 'عدم الالتزام بالزي المدرسي', 'إتلاف ممتلكات المدرسة', 'استخدام الهاتف أثناء الحصة', 'عدم أداء الواجبات', 'إزعاج أثناء الحصة', 'تناول الطعام في غير المكان المخصص', 'عدم احترام المعلم', 'التحدث أثناء الشرح', 'عدم إحضار الكتب', 'عدم كتابة الواجب', 'النوم أثناء الحصة', 'الخروج من الفصل بدون إذن', 'إتلاف كتاب أو دفتر', 'العبث بممتلكات الزملاء', 'استخدام ألفاظ غير لائقة', 'عدم الالتزام بالطابور', 'تناول الطعام داخل الفصل', 'عدم إحضار الزي الرياضي', 'التأخر عن الطابور', 'عدم قص الأظافر', 'عدم تسريح الشعر', 'حمل أدوات حادة', 'العنف تجاه الزملاء', 'عدم احترام الموظفين', 'التجول في الممرات', 'دخول الحمام بدون إذن'];
+        let currentView = 'home';
+        let currentStudentKey = null;
+
+        const headerTitle = document.getElementById('headerTitle');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebarClose = document.getElementById('sidebarClose');
+        const darkModeToggle = document.getElementById('toggleDarkMode');
+        const darkModeLabel = document.getElementById('darkModeLabel');
+
+        function applyDarkMode(isDark) { if (isDark) { document.body.classList.add('dark'); darkModeLabel.textContent = 'الوضع الفاتح'; darkModeToggle.querySelector('i').className = 'fas fa-sun'; } else { document.body.classList.remove('dark'); darkModeLabel.textContent = 'الوضع المظلم'; darkModeToggle.querySelector('i').className = 'fas fa-moon'; } }
+        function toggleDarkMode() { const isDark = !document.body.classList.contains('dark'); localStorage.setItem('darkModePref', isDark ? 'dark' : 'light'); applyDarkMode(isDark); }
+        function showView(viewName) { currentView = viewName; document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewName + 'View')?.classList.add('active'); const titles = { home: 'الرئيسية', students: 'ملفات الطلاب', studentProfile: 'ملف الطالب', violations: 'جميع المخالفات', reports: 'التقارير والإحصائيات' }; headerTitle.textContent = titles[viewName] || 'النظام'; updateNavigationStates(viewName); closeSidebar(); switch (viewName) { case 'home': renderHomePage(); break; case 'students': renderStudentsList(); break; case 'violations': renderAllViolations(); break; case 'reports': renderReportsPage(); break; } }
+        function updateNavigationStates(activeView) { document.querySelectorAll('.bottom-nav-item, .sidebar-menu-item[data-view]').forEach(item => { item.classList.toggle('active', item.dataset.view === activeView); }); }
+        function openSidebar() { sidebar.classList.add('show'); sidebarOverlay.classList.add('show'); }
+        function closeSidebar() { sidebar.classList.remove('show'); sidebarOverlay.classList.remove('show'); }
+        function formatDate(d) { return new Date(d).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' }); }
+        function saveViolations() { localStorage.setItem('studentViolationsMobileV4', JSON.stringify(violations)); }
+        function saveViolationTypes() { localStorage.setItem('violationTypesV4', JSON.stringify(violationTypes)); }
+        function showToast(message, type = 'info') { const t = document.createElement('div'); t.className = 'toast'; t.textContent = message; document.body.appendChild(t); setTimeout(() => t.classList.add('show'), 10); setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000); }
+        function showModal(id) { document.getElementById(id)?.classList.add('show'); }
+        function closeModal(id) { document.getElementById(id)?.classList.remove('show'); }
+        function showConfirmModal(title, msg, onConfirm) { document.getElementById('confirmModalTitle').textContent = title; document.getElementById('confirmModalMessage').textContent = msg; showModal('confirmModal'); const confirmBtn = document.getElementById('confirmModalConfirm'); const cancelBtn = document.getElementById('confirmModalCancel'); const cleanup = () => { closeModal('confirmModal'); confirmBtn.onclick = null; cancelBtn.onclick = null; }; confirmBtn.onclick = () => { cleanup(); onConfirm(); }; cancelBtn.onclick = cleanup; }
+        function getStudentKey(name, id) { return `${name.trim()}_${(id || '').trim()}`; }
+        function getStudentsData() { const map = new Map(); violations.forEach(v => { const key = getStudentKey(v.studentName, v.studentId); if (!map.has(key)) map.set(key, { name: v.studentName, id: v.studentId || '', guardianPhone: '', violations: [] }); const data = map.get(key); data.violations.push(v); if (v.guardianPhone) data.guardianPhone = v.guardianPhone; }); return Array.from(map.values()).map(data => ({ key: getStudentKey(data.name, data.id), ...data, violationsCount: data.violations.length, lastViolation: data.violations.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0] })); }
+        function updateStudentInfo(originalKey, newName, newId, newPhone) { const newKey = getStudentKey(newName, newId); violations.forEach(v => { if (getStudentKey(v.studentName, v.studentId) === originalKey) { v.studentName = newName; v.studentId = newId; v.guardianPhone = newPhone; } }); saveViolations(); currentStudentKey = newKey; openStudentProfile(currentStudentKey); showToast('تم تحديث بيانات الطالب بنجاح.'); }
+        function updateStatistics() { const data = getStudentsData(); const today = new Date().toISOString().slice(0, 10); document.getElementById('totalStudents').textContent = data.length; document.getElementById('totalViolations').textContent = violations.length; document.getElementById('todayViolations').textContent = violations.filter(v => v.violationDate === today).length; document.getElementById('highViolationStudents').textContent = data.filter(s => s.violationsCount >= 5).length; document.getElementById('studentsCount').textContent = data.length; document.getElementById('violationsCount').textContent = violations.length; }
+        function renderHomePage() { updateStatistics(); renderRecentViolations(); }
+        function renderViolationTypes() { const selects = [document.getElementById('violationType'), document.getElementById('quickViolationType'), document.getElementById('searchViolationType')]; const grid = document.getElementById('violationTypesGrid'); selects.forEach(s => s.innerHTML = `<option value="">-- ${s.id === 'searchViolationType' ? 'جميع الأنواع' : 'اختر نوع المخالفة'} --</option>`); grid.innerHTML = ''; violationTypes.forEach((type, index) => { selects.forEach(s => s.innerHTML += `<option value="${type}">${type}</option>`); grid.innerHTML += `<div class="violation-type-tag"><span>${type}</span><button class="remove-btn" onclick="removeViolationType(${index})" title="حذف"><i class="fas fa-times"></i></button></div>`; }); }
+        function addViolationType(type) { const trimmed = type.trim(); if (!trimmed) { showToast('يرجى إدخال نوع المخالفة', 'error'); return; } if (violationTypes.includes(trimmed)) { showToast('هذا النوع موجود بالفعل', 'error'); return; } violationTypes.push(trimmed); saveViolationTypes(); renderViolationTypes(); showToast('تم إضافة نوع المخالفة بنجاح'); }
+        function removeViolationType(index) { const type = violationTypes[index]; showConfirmModal('حذف نوع المخالفة', `هل أنت متأكد من حذف "${type}"؟`, () => { violationTypes.splice(index, 1); saveViolationTypes(); renderViolationTypes(); showToast('تم حذف نوع المخالفة'); }); }
+        function openSearchModal() { renderViolationTypes(); showModal('searchModal'); }
+        function resetSearchForm() { document.getElementById('searchForm').reset(); }
+        function createWhatsAppMessage(v) { return `إشعار مخالفة 📋\n========================\n👤 الطالب: ${v.studentName} ${v.studentId?`(${v.studentId})`:''}\n⚠️ المخالفة: ${v.violationType}\n📅 التاريخ: ${formatDate(v.violationDate)}\n${v.notes?`📝 ملاحظات: ${v.notes}`:''}\n========================\nنرجو المتابعة، وشكراً لتعاونكم.`; }
+        function sendWhatsApp(v) { const msg = createWhatsAppMessage(v); let phone = v.guardianPhone ? v.guardianPhone.replace(/\D/g, '') : ''; if (!window.open(`https://api.whatsapp.com/send?${phone?`phone=${phone}&`:''}text=${encodeURIComponent(msg)}`, '_blank')) showToast('تعذر فتح واتساب.'); }
+        function openStudentProfile(key) { currentStudentKey = key; const student = getStudentsData().find(s => s.key === key); if (!student) return; document.getElementById('currentStudentName').textContent = student.name; document.getElementById('quickStudentName').value = student.name; document.getElementById('quickStudentId').value = student.id || ''; document.getElementById('quickGuardianPhone').value = student.guardianPhone || ''; document.getElementById('quickViolationDate').valueAsDate = new Date(); updateStudentStats(student); renderStudentViolations(student); showView('studentProfile'); }
+        function editViolation(id) { const v = violations.find(v => v.id === id); if (!v) return; showView('home'); document.getElementById('editingViolationId').value = id; document.getElementById('studentName').value = v.studentName; document.getElementById('studentId').value = v.studentId || ''; document.getElementById('violationType').value = v.violationType; document.getElementById('violationDate').value = v.violationDate; document.getElementById('notes').value = v.notes || ''; document.getElementById('guardianPhone').value = v.guardianPhone || ''; document.querySelector('#homeView .card-title').innerHTML = '<i class="fas fa-edit"></i> تعديل بيانات المخالفة'; document.getElementById('submitButton').innerHTML = '<i class="fas fa-save"></i> حفظ التعديل'; document.getElementById('submitButton').className = 'btn btn-warning btn-lg'; document.getElementById('cancelEditButton').style.display = 'block'; document.getElementById('studentName').focus(); }
+        function deleteViolation(id) { showConfirmModal('حذف المخالفة', 'هل أنت متأكد من حذف هذه المخالفة؟', () => { violations = violations.filter(v => v.id !== id); saveViolations(); if (currentView === 'studentProfile' && currentStudentKey) { openStudentProfile(currentStudentKey); } else { showView(currentView); } updateStatistics(); showToast('تم حذف المخالفة بنجاح'); }); }
+        function resetFormToAddingMode() { document.getElementById('violationForm').reset(); document.getElementById('editingViolationId').value = ''; document.querySelector('#homeView .card-title').innerHTML = '<i class="fas fa-plus-circle"></i> إضافة مخالفة جديدة'; document.getElementById('submitButton').innerHTML = '<i class="fas fa-plus"></i> إضافة المخالفة'; document.getElementById('submitButton').className = 'btn btn-primary btn-lg'; document.getElementById('cancelEditButton').style.display = 'none'; document.getElementById('violationDate').valueAsDate = new Date(); }
+        document.addEventListener('DOMContentLoaded', () => { const theme = localStorage.getItem('darkModePref'); if (theme === 'dark') applyDarkMode(true); else if (theme === 'light') applyDarkMode(false); else if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) applyDarkMode(true); menuToggle.addEventListener('click', openSidebar); sidebarClose.addEventListener('click', closeSidebar); sidebarOverlay.addEventListener('click', closeSidebar); document.getElementById('settingsBtn').addEventListener('click', openSidebar); document.querySelectorAll('.bottom-nav-item, .sidebar-menu-item[data-view]').forEach(item => item.addEventListener('click', () => showView(item.dataset.view))); document.getElementById('manageViolationTypes').addEventListener('click', () => { renderViolationTypes(); showModal('violationTypesModal'); }); document.getElementById('exportData').addEventListener('click', exportData); document.getElementById('importData').addEventListener('click', importData); document.getElementById('clearAllData').addEventListener('click', clearAllData); document.getElementById('backupData').addEventListener('click', backupData); darkModeToggle.addEventListener('click', toggleDarkMode); document.getElementById('searchBtn').addEventListener('click', openSearchModal); document.getElementById('searchForm').addEventListener('submit', e => { e.preventDefault(); const p = { studentName: document.getElementById('searchStudentName').value.trim(), studentId: document.getElementById('searchStudentId').value.trim(), violationType: document.getElementById('searchViolationType').value, dateFrom: document.getElementById('searchDateFrom').value, dateTo: document.getElementById('searchDateTo').value, violationCount: document.getElementById('searchViolationCount').value }; if (!Object.values(p).some(v => v)) { showToast('يرجى إدخال معيار بحث واحد على الأقل', 'error'); return; } renderSearchResults(performSearch(p), p); closeModal('searchModal'); showModal('searchResultsModal'); }); document.getElementById('violationForm').addEventListener('submit', handleViolationSubmit); document.getElementById('quickViolationForm').addEventListener('submit', handleQuickViolationSubmit); document.getElementById('editStudentForm').addEventListener('submit', e => { e.preventDefault(); const key = document.getElementById('editStudentOriginalKey').value; const name = document.getElementById('editStudentName').value.trim(); if (!name) { showToast('اسم الطالب مطلوب', 'error'); return; } updateStudentInfo(key, name, document.getElementById('editStudentId').value.trim(), document.getElementById('editStudentGuardianPhone').value.trim()); closeModal('editStudentModal'); }); document.getElementById('addNewViolationType').addEventListener('click', () => { const input = document.getElementById('newViolationTypeInput'); if (input.value.trim()) { addViolationType(input.value); input.value = ''; } }); document.getElementById('cancelEditButton').addEventListener('click', resetFormToAddingMode); document.getElementById('sendAllViolationsBtn').addEventListener('click', () => { const student = getStudentsData().find(s => s.key === currentStudentKey); if (student?.violations.length > 0) sendAllViolationsForStudent(student); else showToast('لا توجد مخالفات للإرسال', 'error'); }); renderViolationTypes(); renderHomePage(); updateStatistics(); document.getElementById('violationDate').valueAsDate = new Date(); });
+        function handleViolationSubmit(event) { event.preventDefault(); const studentName = document.getElementById('studentName').value.trim(); const studentId = document.getElementById('studentId').value.trim(); const violationType = document.getElementById('violationType').value; const violationDate = document.getElementById('violationDate').value; const notes = document.getElementById('notes').value.trim(); const guardianPhone = document.getElementById('guardianPhone').value.trim(); const editingId = document.getElementById('editingViolationId').value ? parseInt(document.getElementById('editingViolationId').value, 10) : null; if (!studentName || !violationType || !violationDate) { showToast('يرجى ملء الحقول الإلزامية', 'error'); return; } if (editingId) { const index = violations.findIndex(v => v.id === editingId); if (index > -1) { violations[index] = { ...violations[index], studentName, studentId, violationType, violationDate, notes, guardianPhone, lastModified: new Date().toISOString() }; showToast('تم تحديث المخالفة بنجاح'); } } else { violations.push({ id: Date.now(), studentName, studentId, violationType, violationDate, notes, guardianPhone, timestamp: new Date().toISOString() }); showToast('تم إضافة المخالفة بنجاح'); } if (guardianPhone) { const key = getStudentKey(studentName, studentId); violations.forEach(v => { if (getStudentKey(v.studentName, v.studentId) === key) v.guardianPhone = guardianPhone; }); } saveViolations(); renderHomePage(); updateStatistics(); resetFormToAddingMode(); }
+        function handleQuickViolationSubmit(event) { event.preventDefault(); const studentName = document.getElementById('quickStudentName').value; const studentId = document.getElementById('quickStudentId').value; const guardianPhone = document.getElementById('quickGuardianPhone').value; const violationType = document.getElementById('quickViolationType').value; const violationDate = document.getElementById('quickViolationDate').value; const notes = document.getElementById('quickNotes').value.trim(); if (!violationType || !violationDate) { showToast('يرجى ملء الحقول المطلوبة', 'error'); return; } const newV = { id: Date.now(), studentName, studentId, violationType, violationDate, notes, guardianPhone, timestamp: new Date().toISOString() }; violations.push(newV); saveViolations(); openStudentProfile(currentStudentKey); document.getElementById('quickViolationForm').reset(); document.getElementById('quickViolationDate').valueAsDate = new Date(); updateStatistics(); showToast('تم إضافة المخالفة بنجاح'); sendWhatsApp(newV); }
+        function importData() { closeSidebar(); const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.json'; fileInput.onchange = e => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = event => { try { const backup = JSON.parse(event.target.result); if (!backup.violations || !backup.violationTypes || backup.version !== 'V4') { showToast('ملف النسخة الاحتياطية غير صالح.', 'error'); return; } showConfirmModal('استيراد البيانات', 'سيتم دمج البيانات من الملف. لن يتم استبدال المخالفات الموجودة.', () => { violationTypes = Array.from(new Set([...violationTypes, ...backup.violationTypes])); const existingIds = new Set(violations.map(v => v.id)); const toImport = backup.violations.filter(v => !existingIds.has(v.id)); violations.push(...toImport); saveViolations(); saveViolationTypes(); renderViolationTypes(); updateStatistics(); showView(currentView); showToast(`تم دمج البيانات بنجاح. تمت إضافة ${toImport.length} مخالفة.`); }); } catch (error) { showToast('خطأ أثناء قراءة الملف.', 'error'); } }; reader.readAsText(file); }; fileInput.click(); }
+        function openStudentProfileFromName(name, id) { openStudentProfile(getStudentKey(name, id)); }
+        function editViolationFromProfile(id) { editViolation(id); }
+        function deleteViolationFromProfile(id) { deleteViolation(id); }
+        function openEditStudentModal() { const student = getStudentsData().find(s => s.key === currentStudentKey); if (!student) return; document.getElementById('editStudentOriginalKey').value = student.key; document.getElementById('editStudentName').value = student.name; document.getElementById('editStudentId').value = student.id; document.getElementById('editStudentGuardianPhone').value = student.guardianPhone; showModal('editStudentModal'); }
+        const originalFunctions = {
+            performSearch: function(params) { return getStudentsData().filter(student => { if (params.studentName && !student.name.toLowerCase().includes(params.studentName.toLowerCase())) return false; if (params.studentId && !student.id.toLowerCase().includes(params.studentId.toLowerCase())) return false; let filtered = student.violations; if (params.violationType) filtered = filtered.filter(v => v.violationType === params.violationType); if (params.dateFrom) filtered = filtered.filter(v => v.violationDate >= params.dateFrom); if (params.dateTo) filtered = filtered.filter(v => v.violationDate <= params.dateTo); if ((params.violationType || params.dateFrom || params.dateTo) && filtered.length === 0) return false; if (params.violationCount) { const c = student.violations.length; switch (params.violationCount) { case '1': if (c !== 1) return false; break; case '2-3': if (c < 2 || c > 3) return false; break; case '4-5': if (c < 4 || c > 5) return false; break; case '6+': if (c < 6) return false; break; } } return true; }); },
+            highlightSearchTerm: function(text, term) { if (!term) return text; return text.replace(new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<span class="search-highlight">$1</span>'); },
+            renderSearchResults: function(results, params) { const container = document.getElementById('searchResultsList'); document.getElementById('searchResultsCount').textContent = `(${results.length} نتيجة)`; if (results.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>لم يتم العثور على نتائج</p></div>`; return; } container.innerHTML = results.map((student, i) => { let countColor = 'var(--success-color)'; if (student.violationsCount >= 5) countColor = 'var(--danger-color)'; else if (student.violationsCount >= 3) countColor = 'var(--warning-color)'; return `<div class="search-result-item" style="animation-delay: ${i * 0.1}s" onclick="closeModal('searchResultsModal'); openStudentProfile('${student.key}')"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;"><h4 style="color: var(--primary-color); margin: 0;">${this.highlightSearchTerm(student.name, params.studentName)}</h4><span style="background: ${countColor}; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.8rem;">${student.violationsCount} مخالفة</span></div><div style="display: flex; justify-content: space-between; align-items: center;">${student.id ? `<span style="color: var(--text-secondary); font-size: 0.8rem;">رقم: ${this.highlightSearchTerm(student.id, params.studentId)}</span>` : '<span></span>'}<span style="color: var(--text-secondary); font-size: 0.8rem;">آخر مخالفة: ${student.lastViolation ? formatDate(student.lastViolation.violationDate) : 'لا توجد'}</span></div></div>`; }).join(''); },
+            renderRecentViolations: function() { const container = document.getElementById('recentViolationsList'); if (violations.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fas fa-clock"></i><p>لا توجد مخالفات حديثة</p></div>`; return; } container.innerHTML = [...violations].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5).map((v, i) => `<div class="list-item" style="animation-delay: ${i * 0.1}s" onclick="openStudentProfile(getStudentKey('${v.studentName.replace(/'/g, "\\'")}','${(v.studentId || '').replace(/'/g, "\\'")}'))"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;"><h4 style="color: var(--primary-color);">${v.studentName}</h4><span style="font-size: 0.8rem;">${formatDate(v.violationDate)}</span></div><div style="display: flex; justify-content: space-between; align-items: center;"><span style="background: var(--primary-color); color: white; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">${v.violationType}</span>${v.studentId ? `<span style="font-size: 0.8rem;">رقم: ${v.studentId}</span>` : ''}</div></div>`).join(''); },
+            renderStudentsList: function() { const container = document.getElementById('studentsList'); const students = getStudentsData(); if (students.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fas fa-users"></i><p>لا توجد ملفات طلاب</p></div>`; return; } container.innerHTML = students.sort((a,b) => b.violationsCount - a.violationsCount).map((s, i) => { let color = 'var(--success-color)'; if (s.violationsCount >= 5) color = 'var(--danger-color)'; else if (s.violationsCount >= 3) color = 'var(--warning-color)'; return `<div class="list-item" style="animation-delay: ${i*0.1}s" onclick="openStudentProfile('${s.key}')"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;"><h4 style="color: var(--primary-color);">${s.name}</h4><span style="background: ${color}; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.8rem;">${s.violationsCount} مخالفة</span></div><div style="display: flex; justify-content: space-between; align-items: center;">${s.id ? `<span style="font-size: 0.8rem;">رقم: ${s.id}</span>` : '<span></span>'}<span style="font-size: 0.8rem;">آخر مخالفة: ${s.lastViolation ? formatDate(s.lastViolation.violationDate) : 'لا توجد'}</span></div></div>`; }).join(''); },
+            renderAllViolations: function() { const container = document.getElementById('allViolationsList'); if (violations.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-list"></i><p>لا توجد مخالفات</p></div>`; return; } container.innerHTML = [...violations].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).map((v, i) => `<div class="list-item" style="animation-delay:${i*0.05}s"><div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;"><h4 style="color:var(--primary-color); cursor: pointer;" onclick="openStudentProfileFromName('${v.studentName.replace(/'/g, "\\'")}','${(v.studentId || '').replace(/'/g, "\\'")}')">${v.studentName}</h4><span style="font-size:0.8rem;">${formatDate(v.violationDate)}</span></div><div style="margin-bottom:0.75rem;"><span style="background:var(--primary-color); color:white; padding:0.25rem 0.75rem; border-radius:12px; font-size:0.8rem;">${v.violationType}</span>${v.studentId ? `<span style="margin-right:0.5rem; font-size:0.8rem;">رقم: ${v.studentId}</span>` : ''}</div>${v.notes ? `<div style="background:var(--bg-primary); padding:0.5rem; border-radius:8px; margin-bottom:0.75rem; font-size:0.85rem;"><strong>ملاحظات:</strong> ${v.notes}</div>` : ''}<div style="display:flex; gap:0.5rem; justify-content:flex-end;"><button class="btn btn-success btn-sm" onclick='sendWhatsApp(${JSON.stringify(v)})'><i class="fab fa-whatsapp"></i></button><button class="btn btn-warning btn-sm" onclick="editViolation(${v.id})"><i class="fas fa-edit"></i></button><button class="btn btn-danger btn-sm" onclick="deleteViolation(${v.id})"><i class="fas fa-trash"></i></button></div></div>`).join(''); },
+            renderReportsPage: function() { const container = document.getElementById('reportsContent'); const students = getStudentsData(); const stats = {}; violations.forEach(v => { stats[v.violationType] = (stats[v.violationType] || 0) + 1; }); let content = `<div class="quick-stats"><div class="stat-card"><div class="stat-icon primary"><i class="fas fa-users"></i></div><div class="stat-number">${students.length}</div><div class="stat-label">إجمالي الطلاب</div></div><div class="stat-card"><div class="stat-icon warning"><i class="fas fa-exclamation-triangle"></i></div><div class="stat-number">${violations.length}</div><div class="stat-label">إجمالي المخالفات</div></div><div class="stat-card"><div class="stat-icon success"><i class="fas fa-chart-line"></i></div><div class="stat-number">${students.length>0?(violations.length/students.length).toFixed(1):0}</div><div class="stat-label">متوسط المخالفات</div></div></div><div><h3 style="margin-bottom: 1rem;"><i class="fas fa-chart-bar" style="color:var(--primary-color); margin-left:0.5rem;"></i>إحصائيات أنواع المخالفات</h3>`; Object.entries(stats).sort((a,b)=>b[1]-a[1]).forEach(([type, count])=>{ const p=violations.length>0?((count/violations.length)*100).toFixed(1):0; content+=`<div style="margin-bottom:0.75rem;"><div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;"><span>${type}</span><span style="font-size:0.8rem;">${count} (${p}%)</span></div><div style="background:var(--border-color);height:8px;border-radius:4px;overflow:hidden;"><div style="background:var(--primary-color);height:100%;width:${p}%;"></div></div></div>`; }); content+=`</div>`; const top=students.sort((a,b)=>b.violationsCount-a.violationsCount).slice(0,5); if(top.length>0){ content+=`<div style="margin-top:2rem;"><h3 style="margin-bottom:1rem;"><i class="fas fa-user-times" style="color:var(--danger-color); margin-left:0.5rem;"></i>الطلاب الأكثر مخالفات</h3>`; top.forEach((s,i)=>{let c='var(--success-color)'; if(s.violationsCount>=5)c='var(--danger-color)'; else if(s.violationsCount>=3)c='var(--warning-color)'; content+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem;background:var(--bg-primary);border-radius:8px;margin-bottom:0.5rem;cursor:pointer;" onclick="openStudentProfileFromName('${s.name.replace(/'/g, "\\'")}','${s.id.replace(/'/g, "\\'")}')"><div><span style="font-weight:600;">${i+1}. ${s.name}</span>${s.id?`<span style="margin-right:0.5rem;font-size:0.8rem;">(${s.id})</span>`:''}</div><span style="background:${c};color:white;padding:0.25rem 0.75rem;border-radius:15px;font-size:0.8rem;">${s.violationsCount} مخالفة</span></div>`;}); content+=`</div>`;} container.innerHTML=content; },
+            updateStudentStats: function(student) { const month = new Date().getMonth(), year = new Date().getFullYear(); const monthCount = student.violations.filter(v => { const d = new Date(v.violationDate); return d.getMonth() === month && d.getFullYear() === year; }).length; let last = '-'; if (student.lastViolation) { const diff = Math.floor((new Date() - new Date(student.lastViolation.violationDate)) / 864e5); last = diff === 0 ? 'اليوم' : `${diff} يوم`; } document.getElementById('profileTotalViolations').textContent = student.violations.length; document.getElementById('profileMonthViolations').textContent = monthCount; document.getElementById('profileLastViolation').textContent = last; },
+            renderStudentViolations: function(student) { const container = document.getElementById('profileViolationsList'); if (student.violations.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-check"></i><p>لا توجد مخالفات لهذا الطالب</p></div>`; return; } container.innerHTML = [...student.violations].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map((v, i) => `<div class="list-item" style="animation-delay:${i * 0.1}s"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;"><span style="background:var(--primary-color);color:white;padding:0.25rem 0.75rem;border-radius:12px;font-size:0.8rem;">${v.violationType}</span><span style="font-size:0.8rem;">${formatDate(v.violationDate)}</span></div>${v.notes?`<div style="background:var(--bg-primary);padding:0.5rem;border-radius:8px;margin-bottom:0.75rem;font-size:0.85rem;"><strong>ملاحظات:</strong> ${v.notes}</div>`:''}<div style="display:flex;gap:0.5rem;justify-content:flex-end;"><button class="btn btn-success btn-sm" onclick='sendWhatsApp(${JSON.stringify(v)})'><i class="fab fa-whatsapp"></i></button><button class="btn btn-warning btn-sm" onclick="editViolationFromProfile(${v.id})"><i class="fas fa-edit"></i></button><button class="btn btn-danger btn-sm" onclick="deleteViolationFromProfile(${v.id})"><i class="fas fa-trash"></i></button></div></div>`).join(''); },
+            sendAllViolationsForStudent: function(student) { let msg = `تقرير شامل للمخالفات 📋\n========================\n👤 الطالب/ة: ${student.name} ${student.id ? `(${student.id})` : ''}\n📊 إجمالي المخالفات: ${student.violations.length}\n========================\n\n`; [...student.violations].sort((a,b)=>new Date(a.violationDate)-new Date(b.violationDate)).forEach((v,i)=>{ msg += `${i + 1}. ${v.violationType}\n📅 التاريخ: ${formatDate(v.violationDate)}\n${v.notes ? `📝 ملاحظات: ${v.notes}\n` : ''}\n`; }); msg += `========================\nنرجو متابعة الأمر، وشكراً لتعاونكم 🙏`; let phone = student.guardianPhone ? student.guardianPhone.replace(/\D/g, '') : ''; if (!window.open(`https://api.whatsapp.com/send?${phone ? `phone=${phone}&` : ''}text=${encodeURIComponent(msg)}`, '_blank')) showToast('تعذر فتح واتساب'); },
+            exportData: function() { if (violations.length === 0) { showToast('لا توجد بيانات للتصدير', 'error'); return; } let csv = "data:text/csv;charset=utf-8,\uFEFFاسم الطالب,الرقم الأكاديمي,نوع المخالفة,تاريخ المخالفة,ملاحظات,رقم ولي الأمر,تاريخ التسجيل\n"; [...violations].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).forEach(v=>{const row=[`"${v.studentName.replace(/"/g,'""')}"`,`"${v.studentId||'-'}"`,`"${v.violationType.replace(/"/g,'""')}"`,`"${formatDate(v.violationDate)}"`,`"${(v.notes||'-').replace(/"/g,'""').replace(/\n/g,' ')}"`,`"${v.guardianPhone||'-'}"`,`"${new Date(v.timestamp).toLocaleString('ar-EG')}"`].join(",");csv+=row+"\n";});const link=document.createElement("a");link.href=encodeURI(csv);link.download=`تقرير_مخالفات_${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(link);link.click();document.body.removeChild(link);showToast('تم بدء تنزيل التقرير');closeSidebar();},
+            clearAllData: function() { showConfirmModal('مسح جميع البيانات', 'تحذير: سيتم مسح جميع بيانات المخالفات بشكل نهائي. هل أنت متأكد؟', () => { violations = []; saveViolations(); renderHomePage(); updateStatistics(); resetFormToAddingMode(); showToast('تم مسح جميع البيانات بنجاح'); closeSidebar(); }); },
+            backupData: function() { const backup = { violations, violationTypes, exportDate: new Date().toISOString(), version: 'V4' }; const dataStr = JSON.stringify(backup, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = `نسخة_احتياطية_${new Date().toISOString().slice(0, 10)}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); showToast('تم إنشاء النسخة الاحتياطية'); closeSidebar(); }
+        };
+        for(const funcName in originalFunctions) { window[funcName] = originalFunctions[funcName].bind(originalFunctions); }
+        
+        // --- Print Functionality Section ---
+        function generateAndPrintReport(studentsData, reportTitle) {
+            const printArea = document.getElementById('print-area');
+            let reportHTML = '';
+            const filteredStudents = studentsData.filter(s => s.violations.length > 0).sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+            filteredStudents.forEach(student => {
+                let studentDetails = [];
+                if(student.id) studentDetails.push(`<strong>الرقم الأكاديمي:</strong> ${student.id}`);
+                studentDetails.push(`<strong>إجمالي المخالفات:</strong> ${student.violationsCount}`);
+                reportHTML += `
+                    <div class="print-page">
+                        <div class="print-header">
+                            <div>
+                                <h1>${reportTitle}</h1>
+                                <div class="date-info"><span>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</span></div>
+                            </div>
+                            <div class="logo"><i class="fas fa-clipboard-list"></i></div>
+                        </div>
+                        <div class="print-content">
+                            <div class="student-section">
+                                <div class="student-info">
+                                    <h2>${student.name}</h2>
+                                    <p>${studentDetails.join(' | ')}</p>
+                                </div>
+                                <table class="print-table">
+                                    <thead><tr><th>#</th><th>نوع المخالفة</th><th>التاريخ</th><th>ملاحظات</th></tr></thead>
+                                    <tbody>
+                                        ${student.violations
+                                            .sort((a, b) => new Date(a.violationDate) - new Date(b.violationDate))
+                                            .map((v, i) => `<tr><td>${i + 1}</td><td>${v.violationType}</td><td>${formatDate(v.violationDate)}</td><td>${v.notes || '-'}</td></tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="print-footer">نظام إدارة مخالفات الطلاب</div>
+                    </div>`;
+            });
+            printArea.innerHTML = reportHTML;
+            setTimeout(() => { window.print(); }, 100);
+        }
+        function printCurrentStudentReport() { const student = getStudentsData().find(s => s.key === currentStudentKey); if (student) { if (student.violations.length === 0) { showToast('لا توجد مخالفات لهذا الطالب للطباعة.', 'warning'); return; } generateAndPrintReport([student], `تقرير مخالفات الطالب`); } }
+        function printAllStudentsReport() { const allStudents = getStudentsData(); if (violations.length === 0) { showToast('لا توجد بيانات لطباعة التقرير.', 'warning'); return; } generateAndPrintReport(allStudents, 'التقرير الشامل لمخالفات الطلاب'); }
+        window.printCurrentStudentReport = printCurrentStudentReport;
+        window.printAllStudentsReport = printAllStudentsReport;
+        
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').then(reg => console.log('Service Worker: Registered')).catch(err => console.log(`Service Worker: Error: ${err}`)); }); }
+    </script>
+</body>
+</html>
